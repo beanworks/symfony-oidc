@@ -101,8 +101,10 @@ class OidcClient implements OidcClientInterface
   /** {@inheritDoc} */
   public function refreshTokens(string $refreshToken): OidcTokens
   {
+    // We don't make use of the session for our implementation.
+    //   - Nigel 2023-01-12
     // Clear session after check
-    $this->sessionStorage->clearState();
+    // $this->sessionStorage->clearState();
 
     // Request and verify the tokens
     return $this->verifyTokens(
@@ -396,18 +398,23 @@ class OidcClient implements OidcClientInterface
 
     // Use basic auth if offered
     $headers = [];
-    if (in_array('client_secret_basic', $this->getTokenEndpointAuthMethods())) {
-      $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientId) . ':' . urlencode($this->clientSecret))];
-      unset($params['client_secret']);
-    }
+    // Temporarily disabled the client_secret_basic check, because ICA's OIDC
+    // provider seems like it does not actually support it...?
+    //   - Nigel 2023-01-12
+    // if (in_array('client_secret_basic', $this->getTokenEndpointAuthMethods())) {
+    //   $headers = ['Authorization: Basic ' . base64_encode(urlencode($this->clientId) . ':' . urlencode($this->clientSecret))];
+    //   unset($params['client_secret']);
+    // }
 
-    if ($codeVerifier = $this->sessionStorage->getCodeVerifier()) {
-      unset($params['client_secret']);
+    // We don't make use of the session for our implementation.
+    //   - Nigel 2023-01-12
+    // if ($codeVerifier = $this->sessionStorage->getCodeVerifier()) {
+    //   unset($params['client_secret']);
 
-      $params = array_merge($params, [
-          'code_verifier' => $codeVerifier,
-      ]);
-    }
+    //   $params = array_merge($params, [
+    //       'code_verifier' => $codeVerifier,
+    //   ]);
+    // }
 
     $jsonToken = json_decode($this->urlFetcher->fetchUrl($this->getTokenEndpoint(), $params, $headers));
 
@@ -419,8 +426,11 @@ class OidcClient implements OidcClientInterface
       throw new OidcAuthenticationException(sprintf('Got response: %s', $jsonToken->error));
     }
 
+    // We don't make use of the session for our implementation.
+    //   - Nigel 2023-01-12
     // Clear code verifier from session after check
-    $this->sessionStorage->clearCodeVerifier();
+    // $this->sessionStorage->clearCodeVerifier();
+
 
     return new OidcTokens($jsonToken);
   }
